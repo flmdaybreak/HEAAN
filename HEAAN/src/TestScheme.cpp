@@ -145,7 +145,7 @@ void TestScheme::testEncryptSingle(long logq, long logp) {
 }
 
 void TestScheme::testAdd(long logq, long logp, long logn) {
-	cout << "!!! START TEST ADD !!!" << endl;
+	cout << "!!! START TEST ADD new !!!" << endl;
 
 	srand(time(NULL));
 	SetNumThreads(8);
@@ -158,23 +158,38 @@ void TestScheme::testAdd(long logq, long logp, long logn) {
 	complex<double>* mvec1 = EvaluatorUtils::randomComplexArray(n);
 	complex<double>* mvec2 = EvaluatorUtils::randomComplexArray(n);
 	complex<double>* madd = new complex<double>[n];
+	double * m1 = EvaluatorUtils::randomRealArray(n);
+	double * m2 = EvaluatorUtils::randomRealArray(n);
+	double * m3 = new double[n];
 
 	for(long i = 0; i < n; i++) {
 		madd[i] = mvec1[i] + mvec2[i];
 	}
-
+	for(long i = 0; i < n; i++) {
+		m3[i] = m1[i] + m2[i];
+	}
 	Ciphertext cipher1, cipher2;
 	scheme.encrypt(cipher1, mvec1, n, logp, logq);
 	scheme.encrypt(cipher2, mvec2, n, logp, logq);
+	SerializationUtils::writeCiphertext(cipher1,"./mul_complex_cipher");
 
-	timeutils.start("Addition");
+	Ciphertext cipher11, cipher22;
+	timeutils.start("encrypt real");
+	scheme.encrypt(cipher11, m1, n, logp, logq);
+	timeutils.stop("encrypt real");
+	scheme.encrypt(cipher22, m2, n, logp, logq);
+
+	timeutils.start("Addition0");
 	scheme.addAndEqual(cipher1, cipher2);
-	timeutils.stop("Addition");
+	timeutils.stop("Addition0");
 
-	complex<double>* dadd = scheme.decrypt(secretKey, cipher1);
+	timeutils.start("Addition_real");
+	scheme.addAndEqual(cipher11, cipher22);
+	timeutils.stop("Addition_real");
 
-	StringUtils::compare(madd, dadd, n, "add");
-
+	timeutils.start("add_decrypt");
+	complex<double>* dadd1 = scheme.decrypt(secretKey, cipher11);
+	timeutils.stop("add_decrypt");
 	cout << "!!! END TEST ADD !!!" << endl;
 }
 
@@ -207,6 +222,47 @@ void TestScheme::testMult(long logq, long logp, long logn) {
 	complex<double>* dmult = scheme.decrypt(secretKey, cipher1);
 
 	StringUtils::compare(mmult, dmult, n, "mult");
+
+	cout << "!!! END TEST MULT !!!" << endl;
+}
+
+
+void TestScheme::testMult1(long logq, long logp, long logn) {
+	cout << "!!! START TEST MULT !!!" << endl;
+	cout << "logn = " << logn << endl;
+	srand(time(NULL));
+	SetNumThreads(8);
+	TimeUtils timeutils;
+	Ring ring;
+	SecretKey secretKey(ring);
+	Scheme scheme(secretKey, ring);
+
+	long n = (1 << logn);
+	// complex<double>* mvec1 = EvaluatorUtils::randomComplexArray(n);
+	// complex<double>* mvec2 = EvaluatorUtils::randomComplexArray(n);
+	double * mvec1 = EvaluatorUtils::randomRealArray(n);
+	double * mvec2 = EvaluatorUtils::randomRealArray(n);
+
+	double* mmult = new double[n];
+	for(long i = 0; i < n; i++) {
+		mmult[i] = mvec1[i] * mvec2[i];
+	}
+
+	Ciphertext cipher1, cipher2;
+	timeutils.start("mul encrypt real");
+	scheme.encrypt(cipher1, mvec1, n, logp, logq);
+	timeutils.stop("mul encrypt real");
+	scheme.encrypt(cipher2, mvec2, n, logp, logq);
+	SerializationUtils::writeCiphertext(cipher1,"./mul_cipher");
+
+	timeutils.start("Multiplication");
+	scheme.multAndEqual(cipher1, cipher2);
+	timeutils.stop("Multiplication");
+
+	timeutils.start("mul_decrypt");
+	complex<double>* dmult = scheme.decrypt(secretKey, cipher1);
+	timeutils.stop("mul_decrypt");
+	// StringUtils::compare(mmult, dmult, n, "mult");
 
 	cout << "!!! END TEST MULT !!!" << endl;
 }

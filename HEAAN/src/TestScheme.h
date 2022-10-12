@@ -31,6 +31,9 @@ public:
 
 	static void testMult(long logq, long logp, long logn);
 
+	static void testMult1(long logq, long logp, long logn);
+
+
 	static void testiMult(long logq, long logp, long logn);
 
 

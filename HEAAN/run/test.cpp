@@ -9,6 +9,8 @@
 #include "../src/HEAAN.h"
 
 #include <string>
+#include <fstream>
+#include <sstream>
 
 using namespace std;
 using namespace heaan;
@@ -19,12 +21,23 @@ using namespace heaan;
   * "./TestHEAAN Encrypt" will run Encrypt Test
   * There are Encrypt, EncryptSingle, Add, Mult, iMult, RotateFast, Conjugate Tests
   */
+ int charToNum(char* chr) {
+
+    std::istringstream iss(chr);
+    int num;
+    iss >> num;
+    return num;
+}
+
 int main(int argc, char **argv) {
 
 	long logq = 800; ///< Ciphertext Modulus
 	long logp = 30; ///< Real message will be quantized by multiplying 2^40
-	long logn = 4; ///< log2(The number of slots)
-
+	long logn = 13; ///< log2(The number of slots)
+	
+	int nint = charToNum(argv[2]);
+	logn = nint;
+	std::cout << "logn = " << logn<<std::endl;
 //----------------------------------------------------------------------------------
 //   STANDARD TESTS
 //----------------------------------------------------------------------------------
@@ -36,6 +49,7 @@ int main(int argc, char **argv) {
 	if(string(argv[1]) == "Add") TestScheme::testAdd(logq, logp, logn);
 	if(string(argv[1]) == "Mult") TestScheme::testMult(logq, logp, logn);
 	if(string(argv[1]) == "iMult") TestScheme::testiMult(logq, logp, logn);
+	if(string(argv[1]) == "Mul") TestScheme::testMult1(logq, logp, logn);
 
 //----------------------------------------------------------------------------------
 //   ROTATE & CONJUGATE
